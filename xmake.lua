@@ -16,4 +16,16 @@ target("memtable")
     add_includedirs("include", {public = true})
 
 
+target("test_skiplist")
+    set_kind("binary")
+    set_group("tests")
+    add_files("test/test_skiplist.cpp")
+    add_deps("skiplist")
+    add_packages("gtest")
 
+target("test_memtable")
+    set_kind("binary")
+    set_group("tests")
+    add_files("test/test_memtable.cpp")
+    add_deps("memtable")
+    add_packages("gtest")

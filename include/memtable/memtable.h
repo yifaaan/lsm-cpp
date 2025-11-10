@@ -10,7 +10,7 @@ class MemTable {
   MemTable();
   ~MemTable();
 
-  void Put(const std::string& key, std::string& value);
+  void Put(const std::string& key, const std::string& value);
   std::optional<std::string> Get(const std::string& key);
   void Remove(const std::string& key);
   void Clear();

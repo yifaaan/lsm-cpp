@@ -13,7 +13,8 @@ struct Node {
   // 不同层级的下一个节点指针
   std::vector<std::shared_ptr<Node>> forward;
 
-  Node(const std::string &k, const std::string &v, int level) : key(k), value(v), forward(level, nullptr) {}
+  Node(const std::string &k, const std::string &v, int level)
+      : key(k), value(v), forward(level, nullptr) {}
 };
 
 class Iterator {
@@ -47,7 +48,7 @@ class SkipList {
   void Remove(const std::string &key);
 
   // 刷出跳表数据，返回key有序键值对
-  std::vector<std::pair<std::string, std::string>> Flush();
+  std::vector<std::pair<std::string, std::string>> Flush() const;
 
   size_t size() const;
 
@@ -64,7 +65,7 @@ class SkipList {
   std::shared_ptr<Node> head_;
   // 最大层级数
   int max_level_;
-  // 当前层级数
+  // 当前最高层级数
   int current_level_;
   // 跳表当前所占字节数
   size_t size_bytes_ = 0;
