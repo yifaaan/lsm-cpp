@@ -44,7 +44,7 @@ void SkipList::Put(const std::string& key, const std::string& value) {
   std::vector<std::shared_ptr<Node>> updates(max_level_, nullptr);
   auto x = head_;
   // 查找每层都需要更新的前驱节点
-  for (int i = current_level_; i >= 0; i--) {
+  for (int i = current_level_ - 1; i >= 0; i--) {
     while (x->forward[i] && x->forward[i]->key < key) {
       x = x->forward[i];
     }

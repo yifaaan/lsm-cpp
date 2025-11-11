@@ -30,7 +30,7 @@ TEST(MemTableTest, RemoveOperations) {
 
 TEST(MemTableTest, FrozenMemTableOperations) {
   MemTable table;
-  
+
   table.Put("key1", "value1");
   table.Put("key2", "value2");
 
