@@ -1,5 +1,7 @@
 #include "memtable/memtable.h"
 
+#include "memtable/iterator.h"
+
 MemTable::MemTable() : frozen_bytes_(0) {
   table_ = std::make_shared<SkipList>(16);
 }
@@ -47,3 +49,6 @@ size_t MemTable::current_size() const { return table_->size(); }
 size_t MemTable::frozen_size() const { return frozen_bytes_; }
 
 size_t MemTable::total_size() const { return current_size() + frozen_size(); }
+
+MemTableIterator MemTable::begin() const { return MemTableIterator{*this}; }
+MemTableIterator MemTable::end() const { return MemTableIterator{}; }

@@ -7,32 +7,37 @@
 #include <string>
 #include <vector>
 
-struct Node {
+struct SkipListNode {
   std::string key;
   std::string value;
   // 不同层级的下一个节点指针
-  std::vector<std::shared_ptr<Node>> forward;
+  std::vector<std::shared_ptr<SkipListNode>> forward;
 
-  Node(const std::string &k, const std::string &v, int level)
+  SkipListNode(const std::string &k, const std::string &v, int level)
       : key(k), value(v), forward(level, nullptr) {}
 };
 
-class Iterator {
+class SkipListIterator {
  public:
-  explicit Iterator(std::shared_ptr<Node> node) : current(node) {}
+  explicit SkipListIterator(std::shared_ptr<SkipListNode> node)
+      : current_(node) {}
 
   std::pair<std::string, std::string> operator*() const;
 
-  Iterator &operator++();
+  SkipListIterator &operator++();
 
-  Iterator operator++(int);
+  SkipListIterator operator++(int);
 
-  bool operator==(const Iterator &other) const;
+  bool operator==(const SkipListIterator &other) const;
 
-  bool operator!=(const Iterator &other) const;
+  bool operator!=(const SkipListIterator &other) const;
+
+  std::string key() const;
+  std::string value() const;
+  bool valid() const;
 
  private:
-  std::shared_ptr<Node> current;
+  std::shared_ptr<SkipListNode> current_;
 };
 
 class SkipList {
@@ -54,15 +59,15 @@ class SkipList {
 
   void Clear();
 
-  Iterator begin() const { return Iterator{head_->forward[0]}; }
-  Iterator end() const { return Iterator{nullptr}; }
+  SkipListIterator begin() const { return SkipListIterator{head_->forward[0]}; }
+  SkipListIterator end() const { return SkipListIterator{nullptr}; }
 
  private:
   // 生成的新节点的随机层数
   int random_level();
 
   // 头节点，不存放数据
-  std::shared_ptr<Node> head_;
+  std::shared_ptr<SkipListNode> head_;
   // 最大层级数
   int max_level_;
   // 当前最高层级数

@@ -5,6 +5,9 @@
 #include <list>
 #include <unordered_map>
 
+
+class MemTableIterator;
+
 class MemTable {
  public:
   MemTable();
@@ -20,7 +23,14 @@ class MemTable {
   size_t current_size() const;
   size_t frozen_size() const;
   size_t total_size() const;
+
+
+  MemTableIterator begin() const;
+  MemTableIterator end() const;
+  
  private:
+  friend class MemTableIterator;
+
   std::shared_ptr<SkipList> table_;
   std::list<std::shared_ptr<SkipList>> frozen_tables_;
   size_t frozen_bytes_;

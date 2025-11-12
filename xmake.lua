@@ -12,7 +12,7 @@ target("skiplist")
 target("memtable")
     set_kind("static")
     add_deps("skiplist")
-    add_files("src/memtable/memtable.cpp")
+    add_files("src/memtable/memtable.cpp", "src/memtable/iterator.cpp")
     add_includedirs("include", {public = true})
 
 

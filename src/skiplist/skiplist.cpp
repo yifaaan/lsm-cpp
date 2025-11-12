@@ -1,32 +1,32 @@
 #include "skiplist/skiplist.h"
 
-std::pair<std::string, std::string> Iterator::operator*() const {
-  return {current->key, current->value};
+std::pair<std::string, std::string> SkipListIterator::operator*() const {
+  return {current_->key, current_->value};
 }
 
-Iterator& Iterator::operator++() {
-  if (current) {
-    current = current->forward[0];
+SkipListIterator& SkipListIterator::operator++() {
+  if (current_) {
+    current_ = current_->forward[0];
   }
   return *this;
 }
 
-Iterator Iterator::operator++(int) {
-  Iterator tmp = *this;
+SkipListIterator SkipListIterator::operator++(int) {
+  SkipListIterator tmp = *this;
   ++(*this);
   return tmp;
 }
 
-bool Iterator::operator==(const Iterator& other) const {
-  return current == other.current;
+bool SkipListIterator::operator==(const SkipListIterator& other) const {
+  return current_ == other.current_;
 }
 
-bool Iterator::operator!=(const Iterator& other) const {
+bool SkipListIterator::operator!=(const SkipListIterator& other) const {
   return !(*this == other);
 }
 
 SkipList::SkipList(int max_level) : max_level_(max_level), current_level_(1) {
-  head_ = std::make_shared<Node>("", "", max_level_);
+  head_ = std::make_shared<SkipListNode>("", "", max_level_);
 }
 
 int SkipList::random_level() {
@@ -41,7 +41,7 @@ int SkipList::random_level() {
 }
 
 void SkipList::Put(const std::string& key, const std::string& value) {
-  std::vector<std::shared_ptr<Node>> updates(max_level_, nullptr);
+  std::vector<std::shared_ptr<SkipListNode>> updates(max_level_, nullptr);
   auto x = head_;
   // 查找每层都需要更新的前驱节点
   for (int i = current_level_ - 1; i >= 0; i--) {
@@ -71,7 +71,7 @@ void SkipList::Put(const std::string& key, const std::string& value) {
     current_level_ = new_level;
   }
 
-  auto new_node = std::make_shared<Node>(key, value, new_level);
+  auto new_node = std::make_shared<SkipListNode>(key, value, new_level);
   size_bytes_ += key.size() + value.size();
 
   for (int i = 0; i < new_level; i++) {
@@ -97,7 +97,7 @@ std::optional<std::string> SkipList::Get(const std::string& key) const {
 void SkipList::Remove(const std::string& key) {
   auto x = head_;
   // 需要更新的前驱
-  std::vector<std::shared_ptr<Node>> updates(max_level_, nullptr);
+  std::vector<std::shared_ptr<SkipListNode>> updates(max_level_, nullptr);
   for (int i = current_level_; i >= 0; i--) {
     while (x->forward[i] && x->forward[i]->key < key) {
       x = x->forward[i];
@@ -135,6 +135,10 @@ std::vector<std::pair<std::string, std::string>> SkipList::Flush() const {
 size_t SkipList::size() const { return size_bytes_; }
 
 void SkipList::Clear() {
-  head_ = std::make_shared<Node>("", "", max_level_);
+  head_ = std::make_shared<SkipListNode>("", "", max_level_);
   size_bytes_ = 0;
 }
+
+std::string SkipListIterator::key() const { return current_->key; }
+std::string SkipListIterator::value() const { return current_->value; }
+bool SkipListIterator::valid() const { return !current_->value.empty(); }
