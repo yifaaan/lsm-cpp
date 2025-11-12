@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "memtable/iterator.h"
@@ -144,4 +145,74 @@ TEST(MemTableTest, IteratorComplexOperations) {
   EXPECT_EQ(result3[3].second, "value5");
 
   EXPECT_FALSE(table.Get("key3").has_value());
+}
+
+TEST(MemTableTest, ConcurrentOperations) {
+  MemTable table;
+  const int num_readers = 4;
+  const int num_writers = 2;
+  const int num_operations = 1000;
+
+  std::atomic<bool> start{false};
+  std::atomic<int> completion_counter{num_readers + num_writers + 1};
+
+  std::vector<std::string> inserted_keys;
+  std::mutex keys_mutex;
+
+  auto writer_func = [&](int thread_id) {
+    while (!start) {
+      std::this_thread::yield();
+    }
+    for (int i = 0; i < num_operations; i++) {
+      std::string key =
+          "key_" + std::to_string(thread_id) + "_" + std::to_string(i);
+      std::string value =
+          "value_" + std::to_string(thread_id) + "_" + std::to_string(i);
+      if (i % 3 == 0) {
+        table.Put(key, value);
+        {
+          std::lock_guard<std::mutex> lock{keys_mutex};
+          inserted_keys.push_back(key);
+        }
+      } else if (i % 3 == 1) {
+        table.Remove(key);
+      } else {
+        table.Put(key, value + "_update");
+      }
+      std::this_thread::sleep_for(std::chrono::microseconds{std::rand() % 100});
+    }
+    completion_counter--;
+  };
+
+  auto reader_func = [&](int thread_id) {
+    while (!start) {
+      std::this_thread::yield();
+    }
+
+    int found_count = 0;
+    for (int i = 0; i < num_operations; ++i) {
+      std::string key_to_find;
+      {
+        std::lock_guard<std::mutex> lock{keys_mutex};
+        if (!inserted_keys.empty()) {
+          key_to_find = inserted_keys[std::rand() % inserted_keys.size()];
+        }
+      }
+
+      if (!key_to_find.empty()) {
+        if (auto result = table.Get(key_to_find); result.has_value()) {
+          found_count++;
+        }
+      }
+
+      if (i % 100 == 0) {
+        std::vector<std::pair<std::string, std::string>> items;
+        for (auto it = table.begin(); it != table.end(); ++it) {
+          items.push_back(*it);
+        }
+      }
+      std::this_thread::sleep_for(std::chrono::microseconds{std::rand() % 100});
+    }
+    completion_counter--;
+  };
 }

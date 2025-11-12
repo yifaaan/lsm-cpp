@@ -1,6 +1,11 @@
 #include "skiplist/skiplist.h"
 
+#include <stdexcept>
+
 std::pair<std::string, std::string> SkipListIterator::operator*() const {
+  if (!current_) {
+    throw std::runtime_error("Dereferencing invalid iterator");
+  }
   return {current_->key, current_->value};
 }
 
@@ -42,6 +47,7 @@ int SkipList::random_level() {
 
 void SkipList::Put(const std::string& key, const std::string& value) {
   std::vector<std::shared_ptr<SkipListNode>> updates(max_level_, nullptr);
+  std::unique_lock<std::shared_mutex> lock{rw_mutex_};
   auto x = head_;
   // 查找每层都需要更新的前驱节点
   for (int i = current_level_ - 1; i >= 0; i--) {
@@ -81,6 +87,7 @@ void SkipList::Put(const std::string& key, const std::string& value) {
 }
 
 std::optional<std::string> SkipList::Get(const std::string& key) const {
+  std::shared_lock<std::shared_mutex> lock{rw_mutex_};
   auto x = head_;
   for (int i = current_level_; i >= 0; i--) {
     while (x->forward[i] && x->forward[i]->key < key) {
@@ -95,9 +102,10 @@ std::optional<std::string> SkipList::Get(const std::string& key) const {
 }
 
 void SkipList::Remove(const std::string& key) {
-  auto x = head_;
   // 需要更新的前驱
   std::vector<std::shared_ptr<SkipListNode>> updates(max_level_, nullptr);
+  std::unique_lock<std::shared_mutex> lock{rw_mutex_};
+  auto x = head_;
   for (int i = current_level_; i >= 0; i--) {
     while (x->forward[i] && x->forward[i]->key < key) {
       x = x->forward[i];
@@ -124,6 +132,7 @@ void SkipList::Remove(const std::string& key) {
 
 std::vector<std::pair<std::string, std::string>> SkipList::Flush() const {
   std::vector<std::pair<std::string, std::string>> data;
+  std::shared_lock<std::shared_mutex> lock{rw_mutex_};
   auto x = head_->forward[0];
   while (x) {
     data.emplace_back(x->key, x->value);
@@ -132,9 +141,13 @@ std::vector<std::pair<std::string, std::string>> SkipList::Flush() const {
   return data;
 }
 
-size_t SkipList::size() const { return size_bytes_; }
+size_t SkipList::size() const {
+  std::vector<std::pair<std::string, std::string>> data;
+  return size_bytes_;
+}
 
 void SkipList::Clear() {
+  std::unique_lock<std::shared_mutex> lock{rw_mutex_};
   head_ = std::make_shared<SkipListNode>("", "", max_level_);
   size_bytes_ = 0;
 }
@@ -142,3 +155,9 @@ void SkipList::Clear() {
 std::string SkipListIterator::key() const { return current_->key; }
 std::string SkipListIterator::value() const { return current_->value; }
 bool SkipListIterator::valid() const { return !current_->value.empty(); }
+
+SkipListIterator SkipList::begin() const {
+  return SkipListIterator{head_->forward[0], rw_mutex_};
+}
+
+SkipListIterator SkipList::end() const { return SkipListIterator{}; }

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../skiplist/skiplist.h"
-
 #include <list>
+#include <shared_mutex>
 #include <unordered_map>
 
+#include "../skiplist/skiplist.h"
 
 class MemTableIterator;
 
@@ -24,14 +24,14 @@ class MemTable {
   size_t frozen_size() const;
   size_t total_size() const;
 
-
   MemTableIterator begin() const;
   MemTableIterator end() const;
-  
+
  private:
   friend class MemTableIterator;
 
   std::shared_ptr<SkipList> table_;
   std::list<std::shared_ptr<SkipList>> frozen_tables_;
   size_t frozen_bytes_;
+  mutable std::shared_mutex rw_mutex_;
 };
