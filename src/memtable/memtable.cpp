@@ -14,14 +14,20 @@ void MemTable::Put(const std::string& key, const std::string& value) {
 
 std::optional<std::string> MemTable::Get(const std::string& key) {
   auto result = table_->Get(key);
-  if (result.has_value() && !result.value().empty()) {
+  if (result.has_value()) {
+    if (result->empty()) {
+      return std::nullopt;
+    }
     return result;
   }
 
   // memtable没有，去frozen memtable
   for (auto& t : frozen_tables_) {
     auto result = t->Get(key);
-    if (result.has_value() && !result.value().empty()) {
+    if (result.has_value()) {
+      if (result->empty()) {
+        return std::nullopt;
+      }
       return result;
     }
   }

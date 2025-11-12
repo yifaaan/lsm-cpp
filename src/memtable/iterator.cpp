@@ -40,9 +40,14 @@ MemTableIterator::MemTableIterator(const MemTable& memtable) {
     level++;
   }
 
+  // When multiple tables (current and frozen) contain the same key, we should only
+  // return the value from the newest table. The newest table is defined by the one
+  // with the smallest mem_idx_ (0 for current, 1 for first frozen, etc).
+  // In the priority queue, smaller mem_idx_ means higher priority.
+  // This loop ensures that for any given key, only the entry from the newest table is kept.
   while (!items_.empty() && items_.top().value.empty()) {
-    auto key = items_.top().value;
-    while (!items_.empty() && items_.top().value == key) {
+    auto key = items_.top().key;
+    while (!items_.empty() && items_.top().key == key) {
       items_.pop();
     }
   }
