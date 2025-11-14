@@ -89,7 +89,7 @@ void SkipList::Put(const std::string& key, const std::string& value) {
 std::optional<std::string> SkipList::Get(const std::string& key) const {
   std::shared_lock<std::shared_mutex> lock{rw_mutex_};
   auto x = head_;
-  for (int i = current_level_; i >= 0; i--) {
+  for (int i = current_level_ - 1; i >= 0; --i) {
     while (x->forward[i] && x->forward[i]->key < key) {
       x = x->forward[i];
     }
@@ -106,7 +106,7 @@ void SkipList::Remove(const std::string& key) {
   std::vector<std::shared_ptr<SkipListNode>> updates(max_level_, nullptr);
   std::unique_lock<std::shared_mutex> lock{rw_mutex_};
   auto x = head_;
-  for (int i = current_level_; i >= 0; i--) {
+  for (int i = current_level_ - 1; i >= 0; --i) {
     while (x->forward[i] && x->forward[i]->key < key) {
       x = x->forward[i];
     }
@@ -114,13 +114,15 @@ void SkipList::Remove(const std::string& key) {
   }
 
   x = x->forward[0];
-  if (x && x->key == key) {
-    for (int i = 0; i < current_level_; i++) {
-      if (updates[i]->forward[i] != x) {
-        break;
-      }
-      updates[i]->forward[i] = x->forward[i];
+  if (!x || x->key != key) {
+    return;
+  }
+
+  for (int i = 0; i < current_level_; ++i) {
+    if (updates[i]->forward[i] != x) {
+      break;
     }
+    updates[i]->forward[i] = x->forward[i];
   }
 
   size_bytes_ -= x->key.size() + x->value.size();
