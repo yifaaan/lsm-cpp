@@ -215,4 +215,62 @@ TEST(MemTableTest, ConcurrentOperations) {
     }
     completion_counter--;
   };
+
+  auto freeze_func = [&]() {
+    while (!start) {
+      std::this_thread::yield();
+    }
+
+    for (int i = 0; i < 5; i++) {
+      std::this_thread::sleep_for(std::chrono::microseconds{100});
+      table.FrozenCurrentTable();
+
+      size_t frozen_size = table.frozen_size();
+      EXPECT_GE(frozen_size, 0);
+
+      size_t total_size = table.total_size();
+      EXPECT_GE(total_size, frozen_size);
+    }
+    completion_counter--;
+  };
+
+  std::vector<std::thread> writers;
+  for (int i = 0; i < num_writers; i++) {
+    writers.emplace_back(writer_func, i);
+  }
+
+  std::vector<std::thread> readers;
+  for (int i = 0; i < num_readers; i++) {
+    readers.emplace_back(reader_func, i);
+  }
+
+  std::thread freeze_thread(freeze_func);
+
+  std::this_thread::sleep_for(std::chrono::milliseconds{100});
+
+  auto start_time = std::chrono::steady_clock::now();
+  start = true;
+  while (completion_counter > 0) {
+    std::this_thread::yield();
+  }
+  auto end_time = std::chrono::steady_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+                      end_time - start_time)
+                      .count();
+
+  for (auto& w : writers) {
+    w.join();
+  }
+  for (auto& r : readers) {
+    r.join();
+  }
+  freeze_thread.join();
+
+  size_t final_size = 0;
+  for (auto it = table.begin(); it != table.end(); ++it) {
+    final_size++;
+  }
+
+  EXPECT_GT(table.total_size(), 0);
+  EXPECT_LE(final_size, num_writers * num_operations);
 }
