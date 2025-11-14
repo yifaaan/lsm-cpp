@@ -34,7 +34,14 @@ std::shared_ptr<Block> Block::Decode(const std::vector<uint8_t>& encoded) {
   size_t num_pos = encoded.size() - sizeof(uint16_t);
   std::memcpy(&num_elements, encoded.data() + num_pos, sizeof(num_elements));
 
-  size_t offsets_pos = num_pos - num_elements * sizeof(uint16_t);
+  size_t min_size = sizeof(uint16_t) +
+                    static_cast<size_t>(num_elements) * sizeof(uint16_t);
+  if (encoded.size() < min_size) {
+    throw std::runtime_error("Invalid encoded Block: insufficient size");
+  }
+
+  size_t offsets_pos =
+      num_pos - static_cast<size_t>(num_elements) * sizeof(uint16_t);
   block->offsets_.resize(num_elements);
   std::memcpy(block->offsets_.data(), encoded.data() + offsets_pos,
               num_elements * sizeof(uint16_t));

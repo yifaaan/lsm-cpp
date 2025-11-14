@@ -4,6 +4,7 @@
 #include <format>
 
 #include "sst/block.h"
+#include "sst/block_iterator.h"
 
 class BlockTest : public ::testing::Test {
  protected:
@@ -103,5 +104,54 @@ TEST_F(BlockTest, LargeDataTest) {
     auto key = std::format("key{:04}", i);
     auto value = std::format("value{}", i);
     EXPECT_EQ(block.GetValueBinary(key).value(), value);
+  }
+}
+
+TEST_F(BlockTest, ErrorHandingTest) {
+  std::vector<uint8_t> invalid_data = {1, 2, 3};
+  EXPECT_THROW(Block::Decode(invalid_data), std::runtime_error);
+
+  std::vector<uint8_t> empty_data;
+  EXPECT_THROW(Block::Decode(empty_data), std::runtime_error);
+}
+
+TEST_F(BlockTest, IteratorTest) {
+  auto block = std::make_shared<Block>();
+
+  EXPECT_EQ(block->begin(), block->end());
+
+  const int n = 100;
+  std::vector<std::pair<std::string, std::string>> test_data;
+
+  for (int i = 0; i < n; i++) {
+    auto key = std::format("key{:03}", i);
+    auto value = std::format("value{:03}", i);
+
+    block->AddEntry(key, value);
+    test_data.emplace_back(key, value);
+  }
+
+  size_t count = 0;
+  for (const auto& [k, v] : *block) {
+    EXPECT_EQ(k, test_data[count].first);
+    EXPECT_EQ(v, test_data[count].second);
+    count++;
+  }
+  EXPECT_EQ(count, test_data.size());
+
+  auto it = block->begin();
+  EXPECT_EQ((*it).first, "key000");
+  ++it;
+  EXPECT_EQ((*it).first, "key001");
+  it++;
+  EXPECT_EQ((*it).first, "key002");
+
+  auto encoded = block->Encode();
+  auto decoded_block = Block::Decode(encoded);
+  count = 0;
+  for (const auto& [key, value] : *decoded_block) {
+    EXPECT_EQ(key, test_data[count].first);
+    EXPECT_EQ(value, test_data[count].second);
+    count++;
   }
 }
