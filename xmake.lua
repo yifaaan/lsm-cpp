@@ -19,7 +19,7 @@ target("memtable")
 target("block")
     set_kind("static")
     -- add_deps("skiplist")
-    add_files("src/sst/*.cpp")
+    add_files("src/block/*.cpp")
     add_includedirs("include", {public = true})
 
 target("test_skiplist")

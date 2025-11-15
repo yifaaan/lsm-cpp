@@ -1,14 +1,14 @@
-#include "sst/block_iterator.h"
+#include "block/block_iterator.h"
 
 #include <stdexcept>
 
-#include "sst/block.h"
+#include "block/block.h"
 
 BlockIterator::BlockIterator(std::shared_ptr<Block> block, size_t index)
     : block_(block), current_index_(index), cached_value_(std::nullopt) {}
 
 BlockIterator& BlockIterator::operator++() {
-  if (block_ && current_index_ < block_->size()) {
+  if (block_ && current_index_ < block_->offsets_.size()) {
     ++current_index_;
     cached_value_ = std::nullopt;
   }
@@ -36,7 +36,7 @@ bool BlockIterator::operator!=(const BlockIterator& other) const {
 }
 
 BlockIterator::value_type BlockIterator::operator*() const {
-  if (!block_ || current_index_ >= block_->size()) {
+  if (!block_ || current_index_ >= block_->offsets_.size()) {
     throw std::out_of_range("Iterator out of range");
   }
 

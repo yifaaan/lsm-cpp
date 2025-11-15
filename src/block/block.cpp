@@ -1,12 +1,15 @@
-#include "sst/block.h"
+#include "block/block.h"
 
 #include <cstddef>
 #include <cstring>
 #include <stdexcept>
 
-#include "sst/block_iterator.h"
+#include "block/block_iterator.h"
+
+Block::Block(size_t capacity) : capacity_(capacity) {}
 
 std::vector<uint8_t> Block::Encode() const {
+  // 数据段 + 偏移段 + 元素个数
   size_t total_bytes = data_.size() * sizeof(uint8_t) +
                        offsets_.size() * sizeof(uint16_t) + sizeof(uint16_t);
   std::vector<uint8_t> encoded(total_bytes, 0);
@@ -34,8 +37,8 @@ std::shared_ptr<Block> Block::Decode(const std::vector<uint8_t>& encoded) {
   size_t num_pos = encoded.size() - sizeof(uint16_t);
   std::memcpy(&num_elements, encoded.data() + num_pos, sizeof(num_elements));
 
-  size_t min_size = sizeof(uint16_t) +
-                    static_cast<size_t>(num_elements) * sizeof(uint16_t);
+  size_t min_size =
+      sizeof(uint16_t) + static_cast<size_t>(num_elements) * sizeof(uint16_t);
   if (encoded.size() < min_size) {
     throw std::runtime_error("Invalid encoded Block: insufficient size");
   }
@@ -64,13 +67,16 @@ std::string Block::GetFirstKey() const {
 
 size_t Block::GetOffsetAt(size_t idx) const { return offsets_.at(idx); }
 
-void Block::AddEntry(const std::string& key, const std::string& value) {
+bool Block::AddEntry(const std::string& key, const std::string& value) {
+  if (size() + key.size() + value.size() + 3 * sizeof(uint16_t) > capacity_ &&
+      !offsets_.empty()) {
+    return false;
+  }
   size_t old_size = data_.size();
 
   uint16_t key_len = key.size();
   uint16_t value_len = value.size();
-  size_t entry_size =
-      sizeof(uint16_t) + key_len + sizeof(uint16_t) + value_len;
+  size_t entry_size = sizeof(uint16_t) + key_len + sizeof(uint16_t) + value_len;
 
   data_.resize(old_size + entry_size);
 
@@ -87,6 +93,7 @@ void Block::AddEntry(const std::string& key, const std::string& value) {
   std::memcpy(data_.data() + pos, value.data(), value_len);
 
   offsets_.push_back(old_size);
+  return true;
 }
 
 std::string Block::GetKeyAt(size_t offset) const {
@@ -139,7 +146,11 @@ Block::Entry Block::GetEntryAt(size_t offset) const {
   return {GetKeyAt(offset), GetValueAt(offset)};
 }
 
-size_t Block::size() const { return offsets_.size(); }
+size_t Block::size() const {
+  return data_.size() + offsets_.size() * sizeof(uint16_t) + sizeof(uint16_t);
+}
+
+bool Block::IsEmpty() const { return offsets_.empty(); }
 
 BlockIterator Block::begin() { return BlockIterator{shared_from_this(), 0}; }
 
