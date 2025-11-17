@@ -63,6 +63,8 @@ class BlockMeta {
   BlockMeta(size_t offset, const std::string& first_key,
             const std::string& last_key);
 
+  bool operator==(const BlockMeta&) const = default;
+
   // 将一组BlockMeta序列化成字节数组
   static std::vector<uint8_t> EncodeMetasToSlice(
       std::span<const BlockMeta> meta_entries);

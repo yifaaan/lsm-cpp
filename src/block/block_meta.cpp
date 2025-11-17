@@ -21,7 +21,7 @@ std::vector<uint8_t> BlockMeta::EncodeMetasToSlice(
   // |num_entries(uint32_t)|
   // |entry[0] ... entry[num_entries - 1]|
   // |hash(uint32_t)|
-  size_t num_entries = meta_entries.size();
+  auto num_entries = static_cast<uint32_t>(meta_entries.size());
 
   size_t total_size = sizeof(uint32_t);
   for (const auto& entry : meta_entries) {
@@ -29,7 +29,7 @@ std::vector<uint8_t> BlockMeta::EncodeMetasToSlice(
                   sizeof(uint16_t) +         // first_key_len
                   entry.first_key_.size() +  // first_key_bytes
                   sizeof(uint16_t) +         // last_key_len
-                  entry.last_key_.size() +   // last_key_bytes
+                  entry.last_key_.size();    // last_key_bytes
   }
   total_size += sizeof(uint32_t);  // hash
 
@@ -53,7 +53,7 @@ std::vector<uint8_t> BlockMeta::EncodeMetasToSlice(
     std::memcpy(ptr, entry.first_key_.data(), first_key_len);
     ptr += first_key_len;
     // last_key_len, last_key
-    uint16_t last_key_len = entry.first_key_.size();
+    uint16_t last_key_len = entry.last_key_.size();
     std::memcpy(ptr, &last_key_len, sizeof(last_key_len));
     ptr += sizeof(last_key_len);
     std::memcpy(ptr, entry.last_key_.data(), last_key_len);
@@ -96,13 +96,15 @@ std::vector<BlockMeta> BlockMeta::DecodeMetasFromSlice(
     uint16_t first_key_len;
     std::memcpy(&first_key_len, ptr, sizeof(first_key_len));
     ptr += sizeof(first_key_len);
-    std::memcpy(meta.first_key_.data(), ptr, first_key_len);
+    meta.first_key_.assign(reinterpret_cast<const char*>(ptr), first_key_len);
+    // std::memcpy(meta.first_key_.data(), ptr, first_key_len);
     ptr += first_key_len;
     // last_key
     uint16_t last_key_len;
     std::memcpy(&last_key_len, ptr, sizeof(last_key_len));
     ptr += sizeof(last_key_len);
-    std::memcpy(meta.last_key_.data(), ptr, last_key_len);
+    meta.last_key_.assign(reinterpret_cast<const char*>(ptr), last_key_len);
+    // std::memcpy(meta.last_key_.data(), ptr, last_key_len);
     ptr += last_key_len;
 
     block_metas.push_back(meta);
