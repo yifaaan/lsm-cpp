@@ -37,3 +37,21 @@ File File::CreateAndWrite(std::string_view path, std::span<const uint8_t> buf) {
   f.file_->Sync();
   return f;
 }
+
+File File::Open(std::string_view path) {
+  File f;
+  if (!f.file_->Open(path, false)) {
+    throw std::runtime_error(std::format("Failed to open file {}", path));
+  }
+  return f;
+}
+
+std::vector<uint8_t> File::ReadToSlice(size_t offset, size_t length) {
+  if (offset + length > file_->size()) {
+    throw std::out_of_range("Read beyond file size");
+  }
+  std::vector<uint8_t> result(length);
+  auto ptr = reinterpret_cast<const uint8_t*>(file_->data());
+  std::memcpy(result.data(), ptr + offset, length);
+  return result;
+}
