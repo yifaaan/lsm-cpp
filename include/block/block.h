@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-/*
+/* Block
 ----------------------------------------------------------------------------------------------------
 |             Data Section             |              Offset Section | Extra |
 ----------------------------------------------------------------------------------------------------
@@ -28,9 +28,15 @@ class Block : public std::enable_shared_from_this<Block> {
   Block() = default;
   explicit Block(size_t capacity);
 
+  // 不包括hash
   std::vector<uint8_t> Encode() const;
 
+  // 解码一个编码后的 Block。如果 with_hash 为 true，表示编码末尾附带
+  // 了 4 字节的 hash，需要在解码时做校验并剥离。
   static std::shared_ptr<Block> Decode(const std::vector<uint8_t>& encoded);
+
+  static std::shared_ptr<Block> Decode(const std::vector<uint8_t>& encoded,
+                                       bool with_hash);
 
   std::string GetFirstKey() const;
 
