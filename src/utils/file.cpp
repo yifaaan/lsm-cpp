@@ -1,5 +1,3 @@
-#pragma once
-
 #include "utils/file.h"
 
 #include <cstring>
