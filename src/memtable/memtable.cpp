@@ -1,6 +1,6 @@
 #include "memtable/memtable.h"
 
-#include "memtable/iterator.h"
+#include "memtable/memtable_iterator.h"
 
 MemTable::MemTable() : frozen_bytes_(0) {
   table_ = std::make_shared<SkipList>(16);
@@ -13,7 +13,7 @@ void MemTable::Put(const std::string& key, const std::string& value) {
   table_->Put(key, value);
 }
 
-std::optional<std::string> MemTable::Get(const std::string& key) {
+std::optional<std::string> MemTable::Get(const std::string& key) const {
   std::shared_lock<std::shared_mutex> lock{rw_mutex_};
   auto result = table_->Get(key);
   if (result.has_value()) {

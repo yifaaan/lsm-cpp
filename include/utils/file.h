@@ -9,6 +9,8 @@
 
 #include "utils/mmap_file.h"
 
+// File 封装基于 MMapFile 的文件读写接口，负责创建/打开 SST 文件，
+// 提供按偏移读取指定字节切片的能力。
 class File {
  public:
   File();

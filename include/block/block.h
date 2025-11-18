@@ -24,6 +24,8 @@
 
 class BlockIterator;
 
+// Block 表示 SST/内存中的一个数据块，内部以紧凑二进制格式存储有序 KV 记录，
+// 提供追加写入、编码/解码以及按 key 二分查找和顺序遍历等能力。
 class Block : public std::enable_shared_from_this<Block> {
  public:
   Block() : capacity_(std::numeric_limits<size_t>::max()) {}
@@ -45,6 +47,8 @@ class Block : public std::enable_shared_from_this<Block> {
   size_t GetOffsetAt(size_t idx) const;
 
   bool AddEntry(const std::string& key, const std::string& value);
+
+  std::optional<size_t> GetIdxBinary(const std::string& key) const;
 
   std::optional<std::string> GetValueBinary(const std::string& key) const;
 

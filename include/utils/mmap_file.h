@@ -7,6 +7,8 @@
 #include <string>
 #include <string_view>
 
+// MMapFile 是对底层 POSIX mmap 的轻量封装，负责打开/创建文件并将其
+// 映射到内存，同时提供写入与同步到磁盘的能力。
 class MMapFile {
  public:
   MMapFile() : fd_(-1), data_(nullptr), file_size_(0) {}

@@ -2,8 +2,8 @@
 
 #include <cstddef>
 #include <cstring>
-#include <stdexcept>
 #include <functional>
+#include <stdexcept>
 #include <string_view>
 
 #include "block/block_iterator.h"
@@ -58,10 +58,8 @@ std::shared_ptr<Block> Block::Decode(const std::vector<uint8_t>& encoded,
     uint32_t stored_hash = 0;
     std::memcpy(&stored_hash, encoded.data() + hash_pos, sizeof(stored_hash));
 
-    uint32_t computed_hash =
-        std::hash<std::string_view>{}({reinterpret_cast<const char*>(
-                                           encoded.data()),
-                                       payload_size});
+    uint32_t computed_hash = std::hash<std::string_view>{}(
+        {reinterpret_cast<const char*>(encoded.data()), payload_size});
     if (stored_hash != computed_hash) {
       throw std::runtime_error("Block hash verification failed");
     }
@@ -77,8 +75,8 @@ std::shared_ptr<Block> Block::Decode(const std::vector<uint8_t>& encoded,
   std::memcpy(&num_elements, encoded.data() + num_pos, sizeof(num_elements));
 
   // payload 至少要包含 offsets 区 + num_elements 自身
-  size_t min_size = sizeof(uint16_t) +
-                    static_cast<size_t>(num_elements) * sizeof(uint16_t);
+  size_t min_size =
+      sizeof(uint16_t) + static_cast<size_t>(num_elements) * sizeof(uint16_t);
   if (payload_size < min_size) {
     throw std::runtime_error("Invalid encoded Block: insufficient size");
   }
@@ -162,7 +160,7 @@ int Block::CompareKeyAt(size_t offset, const std::string& target) const {
   return key.compare(target);
 }
 
-std::optional<std::string> Block::GetValueBinary(const std::string& key) const {
+std::optional<size_t> Block::GetIdxBinary(const std::string& key) const {
   if (offsets_.empty()) {
     return std::nullopt;
   }
@@ -172,12 +170,19 @@ std::optional<std::string> Block::GetValueBinary(const std::string& key) const {
     int mid_offset = offsets_[mid];
     int cmp = CompareKeyAt(mid_offset, key);
     if (cmp == 0) {
-      return GetValueAt(mid_offset);
+      return mid_offset;
     } else if (cmp < 0) {
       l = mid + 1;
     } else {
       r = mid - 1;
     }
+  }
+  return std::nullopt;
+}
+
+std::optional<std::string> Block::GetValueBinary(const std::string& key) const {
+  if (auto idx = GetIdxBinary(key); idx.has_value()) {
+    return GetValueAt(offsets_[*idx]);
   }
   return std::nullopt;
 }

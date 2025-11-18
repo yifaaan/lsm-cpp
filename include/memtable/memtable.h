@@ -7,14 +7,15 @@
 #include "../skiplist/skiplist.h"
 
 class MemTableIterator;
-
+// MemTable 负责维护内存中的有序 KV 数据，封装底层 SkipList，
+// 并提供写入、查询、删除以及冻结/刷盘等操作接口。
 class MemTable {
  public:
   MemTable();
   ~MemTable();
 
   void Put(const std::string& key, const std::string& value);
-  std::optional<std::string> Get(const std::string& key);
+  std::optional<std::string> Get(const std::string& key) const;
   void Remove(const std::string& key);
   void Clear();
   void Flush();

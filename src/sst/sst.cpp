@@ -2,6 +2,7 @@
 
 #include "block/block.h"
 #include "block/block_meta.h"
+#include "sst/sst_iterator.h"
 
 SST SST::Open(size_t sst_id, File file) {
   SST sst;
@@ -159,6 +160,22 @@ SST SSTBuilder::Build(size_t sst_id, std::string_view path) {
   sst.meta_entries_ = std::move(meta_entries_);
   sst.first_key_ = sst.meta_entries_.front().first_key_;
   sst.last_key_ = sst.meta_entries_.back().last_key_;
-  
+
   return sst;
+}
+
+SstIterator SST::Iterator(const std::string& key) {
+  if (key < first_key_ || key > last_key_) {
+    return end();
+  }
+  return SstIterator(shared_from_this(), key);
+}
+
+SstIterator SST::begin() { return SstIterator(shared_from_this()); }
+
+SstIterator SST::end() {
+  SstIterator it(shared_from_this());
+  it.block_idx_ = meta_entries_.size();
+  it.block_iter_ = nullptr;
+  return it;
 }

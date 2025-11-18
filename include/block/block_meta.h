@@ -32,7 +32,8 @@
  数组的哈希值(只包括数组部分, 不包括 num_entries ), 用于校验 metadata 的完整性
  */
 
-// Block的信息
+// Block 信息的元数据描述，用于在 SST 中记录每个数据块的文件偏移和首尾 key，
+// 供 SST 按 key 定位 Block 以及校验元数据完整性。
 class BlockMeta {
  private:
 

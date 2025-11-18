@@ -19,6 +19,8 @@ struct SkipListNode {
       : key(k), value(v), forward(level, nullptr) {}
 };
 
+// SkipListIterator 负责按 key 有序地遍历 SkipList 最底层链表上的
+// 键值对，用于刷盘和上层 MemTable 的顺序读。
 class SkipListIterator {
  public:
   // SkipListIterator(std::shared_ptr<SkipListNode> node, std::shared_mutex &mutex)
@@ -52,6 +54,8 @@ class SkipListIterator {
   // std::shared_ptr<std::shared_lock<std::shared_mutex>> lock;
 };
 
+// SkipList 是一个支持按 key 有序插入/查询/删除的跳表实现，
+// 作为 MemTable 底层的数据结构，用于维护内存中的有序 KV 集合。
 class SkipList {
  public:
   explicit SkipList(int max_level);
