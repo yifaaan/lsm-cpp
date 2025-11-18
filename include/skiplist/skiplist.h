@@ -21,11 +21,15 @@ struct SkipListNode {
 
 class SkipListIterator {
  public:
-  SkipListIterator(std::shared_ptr<SkipListNode> node, std::shared_mutex &mutex)
-      : current_(node),
-        lock(std::make_shared<std::shared_lock<std::shared_mutex>>(mutex)) {}
+  // SkipListIterator(std::shared_ptr<SkipListNode> node, std::shared_mutex &mutex)
+  //     : current_(node),
+  //       lock(std::make_shared<std::shared_lock<std::shared_mutex>>(mutex)) {}
 
-  SkipListIterator() : current_(nullptr), lock(nullptr) {}
+  // SkipListIterator() : current_(nullptr), lock(nullptr) {}
+
+  explicit SkipListIterator(std::shared_ptr<SkipListNode> node) : current_(node) {}
+  
+  SkipListIterator() : current_(nullptr) {}
 
   std::pair<std::string, std::string> operator*() const;
 
@@ -43,8 +47,9 @@ class SkipListIterator {
 
  private:
   std::shared_ptr<SkipListNode> current_;
+
   // 迭代有效期间持有整个skiplist的读锁
-  std::shared_ptr<std::shared_lock<std::shared_mutex>> lock;
+  // std::shared_ptr<std::shared_lock<std::shared_mutex>> lock;
 };
 
 class SkipList {
@@ -53,7 +58,7 @@ class SkipList {
 
   ~SkipList() {
     // 析构期间确保没有别的线程访问
-    std::unique_lock<std::shared_mutex> lock(rw_mutex_);
+    // std::unique_lock<std::shared_mutex> lock(rw_mutex_);
     // TODO: Clean
   }
 
@@ -88,5 +93,5 @@ class SkipList {
   // 跳表当前所占字节数
   size_t size_bytes_ = 0;
   
-  mutable std::shared_mutex rw_mutex_;
+  // mutable std::shared_mutex rw_mutex_;
 };

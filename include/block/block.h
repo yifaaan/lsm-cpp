@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <limits>
 
 /* Block
 ----------------------------------------------------------------------------------------------------
@@ -25,7 +26,7 @@ class BlockIterator;
 
 class Block : public std::enable_shared_from_this<Block> {
  public:
-  Block() = default;
+  Block() : capacity_(std::numeric_limits<size_t>::max()) {}
   explicit Block(size_t capacity);
 
   // 不包括hash

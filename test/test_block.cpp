@@ -3,8 +3,8 @@
 
 #include <format>
 
-#include "sst/block.h"
-#include "sst/block_iterator.h"
+#include "block/block.h"
+#include "block/block_iterator.h"
 
 class BlockTest : public ::testing::Test {
  protected:
